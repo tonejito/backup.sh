@@ -5,14 +5,23 @@
 #       https://www.gnu.org/software/tar/manual/html_section/tar_49.html
 #	https://gist.github.com/tonejito/1349e8b740423d808f15
 
+PRINTF=printf
+CAT=cat
+TR=tr
+XARGS=xargs
+CP=cp
+TOUCH=touch
+TAR=tar
+TAIL=tail
+
 # Operate on filesystem root
 cd /
 
 # Create CACHEDIR.TAG in /tmp
-printf "Signature: 8a477f597d28d172789f06886806bc55" > /tmp/CACHEDIR.TAG
+$PRINTF "Signature: 8a477f597d28d172789f06886806bc55" > /tmp/CACHEDIR.TAG
 
 # Write one per line the directories to exclude, you might use `ncdu -x /` to check for them
-cat > /.exclude << EOF
+$CAT > /.exclude << EOF
 /dev/
 /proc/
 /sys/
@@ -21,16 +30,16 @@ cat > /.exclude << EOF
 EOF
 
 # Create a CACHEDIR.TAG in each of the /.exclude(d) directories
-cat /.exclude | tr '\n' '\0' | xargs -0 -r -t -n 1 -I {} cp -v /tmp/CACHEDIR.TAG {}/
+$CAT /.exclude | $TR '\n' '\0' | $XARGS -0 -r -t -n 1 -I {} $CP -v /tmp/CACHEDIR.TAG {}/
 
 BACKUP="`hostname -f`"
 DATE="`date '+%F'`"
 PREFIX=/srv
 
-touch "${PREFIX}/${BACKUP}_${DATE}.log"
+$TOUCH "${PREFIX}/${BACKUP}_${DATE}.log"
 
 # Create a plain TAR backup with label, save the command log to a file
-tar -vv \
+$TAR -vv \
   --create \
   --numeric-owner \
   --one-file-system \
@@ -49,5 +58,5 @@ tar -vv \
   / \
 &> "${PREFIX}/${BACKUP}_${DATE}.log" &
 
-tail -n 0 -f "${PREFIX}/${BACKUP}_${DATE}.log"
+$TAIL -n 0 -f "${PREFIX}/${BACKUP}_${DATE}.log"
 
