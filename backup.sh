@@ -3,6 +3,7 @@
 #       https://dev.yorhel.nl/ncdu/man
 #       http://www.brynosaurus.com/cachedir/spec.html
 #       https://www.gnu.org/software/tar/manual/html_section/tar_49.html
+#	https://gist.github.com/tonejito/1349e8b740423d808f15
 
 # Operate on filesystem root
 cd /
@@ -24,9 +25,12 @@ cat /.exclude | tr '\n' '\0' | xargs -0 -r -t -n 1 -I {} cp -v /tmp/CACHEDIR.TAG
 
 BACKUP="`hostname -f`"
 DATE="`date '+%F'`"
+PREFIX=/srv
+
+touch "${PREFIX}/${BACKUP}_${DATE}.log"
 
 # Create a plain TAR backup with label, save the command log to a file
-/bin/tar -vv \
+tar -vv \
   --create \
   --numeric-owner \
   --one-file-system \
@@ -37,10 +41,13 @@ DATE="`date '+%F'`"
   --sparse \
   --preserve-permissions \
   --exclude-caches \
-  --exclude "/srv/${BACKUP}_*.tar" \
-  --exclude "/srv/${BACKUP}_*.log" \
+  --exclude "${PREFIX}/${BACKUP}_*.tar" \
+  --exclude "${PREFIX}/${BACKUP}_*.log" \
   --exclude-from /.exclude \
   --label "${BACKUP}_${DATE}" \
-  --file "/srv/${BACKUP}_${DATE}.tar" \
+  --file "${PREFIX}/${BACKUP}_${DATE}.tar" \
   / \
-&> "/srv/${BACKUP}_${DATE}.log"
+&> "${PREFIX}/${BACKUP}_${DATE}.log" &
+
+tail -n 0 -f "${PREFIX}/${BACKUP}_${DATE}.log"
+
