@@ -10,9 +10,13 @@ CAT=cat
 TR=tr
 XARGS=xargs
 CP=cp
-TOUCH=touch
+HOSTNAME=hostname
+DATE=date
 TAR=tar
-TAIL=tail
+TEE=tee
+MD5SUM=md5sum
+SHA1SUM=sha1sum
+SHA256SUM=sha256sum
 
 # Operate on filesystem root
 cd /
@@ -32,11 +36,9 @@ EOF
 # Create a CACHEDIR.TAG in each of the /.exclude(d) directories
 $CAT /.exclude | $TR '\n' '\0' | $XARGS -0 -r -t -n 1 -I {} $CP -v /tmp/CACHEDIR.TAG {}/
 
-BACKUP="`hostname -f`"
-DATE="`date '+%F'`"
+BACKUP="`$HOSTNAME -f`"
+DATE="`$DATE '+%F'`"
 PREFIX=/srv
-
-$TOUCH "${PREFIX}/${BACKUP}_${DATE}.log"
 
 # Create a plain TAR backup with label, save the command log to a file
 $TAR -vv \
@@ -56,7 +58,12 @@ $TAR -vv \
   --label "${BACKUP}_${DATE}" \
   --file "${PREFIX}/${BACKUP}_${DATE}.tar" \
   / \
-&> "${PREFIX}/${BACKUP}_${DATE}.log" &
+2>&1 | $TEE "${PREFIX}/${BACKUP}_${DATE}.log"
 
-$TAIL -n 0 -f "${PREFIX}/${BACKUP}_${DATE}.log"
+pushd .
+cd $PREFIX
+$MD5SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.md5"
+$SHA1SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.sha1"
+$SHA256SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.sha256"
+popd
 
