@@ -17,6 +17,7 @@ TEE=tee
 MD5SUM=md5sum
 SHA1SUM=sha1sum
 SHA256SUM=sha256sum
+HASHDEEP=hashdeep
 
 # Operate on filesystem root
 cd /
@@ -62,8 +63,13 @@ $TAR -vv \
 
 pushd .
 cd $PREFIX
-$MD5SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.md5"
-$SHA1SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.sha1"
-$SHA256SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.sha256"
+if [ -x "`which $HASHDEEP`" ]
+then
+  $HASHDEEP -l -c md5,sha1,sha256 "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.hashdeep"
+else
+  $MD5SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.md5"
+  $SHA1SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.sha1"
+  $SHA256SUM "${BACKUP}_${DATE}.tar" | $TEE "${BACKUP}_${DATE}.sha256"
+fi
 popd
 
